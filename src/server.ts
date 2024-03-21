@@ -5,6 +5,10 @@ import postgres from "postgres";
 
 const app = fastify();
 
+app.get("/", async () => {
+  
+})
+
 app.get("/links", async (request, reply) => {
   const result = await sql/*sql*/ `
     SELECT * 
@@ -15,13 +19,23 @@ app.get("/links", async (request, reply) => {
   return result;
 });
 
-app.post("/links", async (request, reply) => {
+app.post("/link", async (request, reply) => {
   const createLinkSchema = z.object({
     code: z.string().min(3),
     url: z.string().url(),
   });
 
   const { code, url } = createLinkSchema.parse(request.body);
+  
+  const codeAlreadyExists = await sql/*sql*/ `
+    SELECT *
+    FROM short_links
+    WHERE code = ${code}
+  `;
+
+  if (codeAlreadyExists.length > 0) {
+    return reply.status(400).send({ message: "Code Already in Use!" });
+  }
 
   try {
     const result = await sql/*sql*/ `
@@ -34,14 +48,8 @@ app.post("/links", async (request, reply) => {
 
     return reply.status(201).send({ shortLinkId: link.id });
   } catch (error) {
-    if (error instanceof postgres.PostgresError) {
-      if (error.code === "23505") {
-        return reply.status(400).send({ message: "Code Already in Use!" });
-      }
-    }
-
     console.error(error);
-
+    
     return reply.status(500).send({ message: "Internal Server Error!" });
   }
 });
