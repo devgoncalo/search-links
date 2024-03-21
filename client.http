@@ -13,3 +13,7 @@ GET http://localhost:3333/api/links
 ###
 
 GET http://localhost:3333/dub
+
+###
+
+GET http://localhost:3333/api/metrics
