@@ -5,3 +5,7 @@ Content-Type: application/json
   "code": "dub",
   "url": "https://dub.sh"
 }
+
+###
+
+GET http://localhost:3333/links
