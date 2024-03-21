@@ -1,15 +1,33 @@
 import fastify from "fastify";
+
 import { z } from "zod";
 import { sql } from "./lib/postgres";
-import postgres from "postgres";
 
 const app = fastify();
 
-app.get("/", async () => {
-  
-})
+app.get("/:code", async (request, reply) => {
+  const getLinkSchema = z.object({
+    code: z.string().min(3),
+  });
 
-app.get("/links", async (request, reply) => {
+  const { code } = getLinkSchema.parse(request.params);
+
+  const result = await sql/*sql*/ `
+    SELECT id, original_url
+    FROM short_links
+    WHERE short_links.code = ${code}
+  `;
+
+  if (result.length === 0) {
+    return reply.status(400).send({ message: "Link Not Found!" });
+  }
+
+  const link = result[0];
+
+  return reply.redirect(301, link.original_url);
+});
+
+app.get("/api/links", async () => {
   const result = await sql/*sql*/ `
     SELECT * 
     FROM short_links
@@ -19,14 +37,14 @@ app.get("/links", async (request, reply) => {
   return result;
 });
 
-app.post("/link", async (request, reply) => {
+app.post("/api/links", async (request, reply) => {
   const createLinkSchema = z.object({
     code: z.string().min(3),
     url: z.string().url(),
   });
 
   const { code, url } = createLinkSchema.parse(request.body);
-  
+
   const codeAlreadyExists = await sql/*sql*/ `
     SELECT *
     FROM short_links
@@ -49,7 +67,7 @@ app.post("/link", async (request, reply) => {
     return reply.status(201).send({ shortLinkId: link.id });
   } catch (error) {
     console.error(error);
-    
+
     return reply.status(500).send({ message: "Internal Server Error!" });
   }
 });
