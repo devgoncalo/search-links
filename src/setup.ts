@@ -12,7 +12,7 @@ async function setup() {
 
   await sql.end()
 
-  console.log("Database successfully setup!");
+  console.log("Database Successfully Setup!");
 }
 
 setup();
